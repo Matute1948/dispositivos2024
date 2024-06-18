@@ -1,5 +1,6 @@
 package com.uce.aplicacion1.ui.activitys
 
+
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -23,11 +24,14 @@ class BiometricActivity : AppCompatActivity() {
     private lateinit var executor: Executor
     private lateinit var biometricPrompt : BiometricPrompt
     private lateinit var promptInfo : BiometricPrompt.PromptInfo
+    private lateinit var biometricManager: BiometricManager
 
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
 
         binding = ActivityBiometricBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -37,7 +41,10 @@ class BiometricActivity : AppCompatActivity() {
         promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Aplicacion1")
             .setSubtitle("Ingrese su huella digital")
+            .setNegativeButtonText("Cancelar")
             .build()
+
+
 
         biometricPrompt = BiometricPrompt(this,
             executor,
@@ -48,6 +55,8 @@ class BiometricActivity : AppCompatActivity() {
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
+                    val x= Intent(applicationContext, MainActivity::class.java)
+                    startActivity(x)
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
@@ -55,6 +64,17 @@ class BiometricActivity : AppCompatActivity() {
                 }
             })
 
+        initListeners()
+    }
+
+    private fun initListeners() {
+        binding.imagFinger.setOnClickListener(){
+            initBiometric()
+        }
+
+    }
+
+    private fun initBiometric() {
         //accedemos al biometrico
         val biometricManager = BiometricManager.from(this)
 
@@ -63,22 +83,22 @@ class BiometricActivity : AppCompatActivity() {
                 or BiometricManager.Authenticators.BIOMETRIC_STRONG)
 
         when(x) {
-           BiometricManager.BIOMETRIC_SUCCESS -> {
-               // si ya lo tenemos el sistema nos muetra la pantlla donde esta la huella
-                B
-           }
-           BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE ->{}
-           BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED ->{}
-           BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED ->{
-               // llama al sistema y vamos a pedir una peticion para que ingrese el pin y la huella o solo la huella :v
-               val enrollIntent = Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
-                   putExtra(Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
-                       BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
-               }
-               startActivityForResult(enrollIntent, REQUEST_CODE)
-           }
+            BiometricManager.BIOMETRIC_SUCCESS -> {
+                // si ya lo tenemos el sistema nos muetra la pantlla donde esta la huella
+                //si existe autetifique y mande la info
+                biometricPrompt.authenticate(promptInfo)
+            }
+            BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE ->{}
+            BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED ->{}
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED ->{
+                // llama al sistema y vamos a pedir una peticion para que ingrese el pin y la huella o solo la huella :v
+                val enrollIntent = Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
+                    putExtra(Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
+                        BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+                }
+                startActivity(enrollIntent)
+            }
         }
-
     }
 
 }
