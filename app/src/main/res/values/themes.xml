@@ -7,6 +7,16 @@
 
     <style name="Theme.Aplicacion1" parent="Base.Theme.Aplicacion1" />
 
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen" >
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
+        <item name="windowSplashScreenAnimationDuration">3000</item>
+        <item name="windowSplashScreenBackground">@color/blue</item>
+        <item name="postSplashScreenTheme">@style/Theme.Aplicacion1</item>
+
+    </style>
+
+
+
     <style name ="ButtonBase">
         <item name="android:layout_margin">10dp</item>
         <item name="android:textSize">@dimen/text_size_18</item>

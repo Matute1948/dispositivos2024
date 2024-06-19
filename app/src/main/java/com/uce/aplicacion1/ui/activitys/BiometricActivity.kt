@@ -1,23 +1,39 @@
 package com.uce.aplicacion1.ui.activitys
 
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
-import android.view.LayoutInflater
-import androidx.activity.enableEdgeToEdge
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.uce.aplicacion1.R
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.lifecycleScope
+
 import com.uce.aplicacion1.databinding.ActivityBiometricBinding
+import com.uce.aplicacion1.ui.entites.DataStoreEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Executor
 
 
+val Context.settingDataStore: DataStore<Preferences> by preferencesDataStore(name="settings")
 class BiometricActivity : AppCompatActivity() {
+
+
 
     private lateinit var binding: ActivityBiometricBinding
 
@@ -32,7 +48,7 @@ class BiometricActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
 
-
+        val splash  = installSplashScreen()
         binding = ActivityBiometricBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -65,11 +81,15 @@ class BiometricActivity : AppCompatActivity() {
             })
 
         initListeners()
+        Thread.sleep(2000)
+        splash.setKeepOnScreenCondition{false}
     }
 
     private fun initListeners() {
         binding.imagFinger.setOnClickListener(){
-            initBiometric()
+            dataStoreSave(DataStoreEntity("Andres",true))
+            Log.d("TAG",dataStoreGet().toString())
+            //initBiometric()
         }
 
     }
@@ -100,5 +120,35 @@ class BiometricActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun dataStoreSave(user:DataStoreEntity){
+        //Guardar
+        lifecycleScope.launch ( Dispatchers.IO ){
+            settingDataStore.edit {prefs ->
+                prefs[booleanPreferencesKey("active")] = user.valor
+                prefs[stringPreferencesKey("user")] =  user.name
+
+            }
+        }
+    }
+    private fun dataStoreGet():DataStoreEntity{
+         var ret=DataStoreEntity()
+        //Recuperar
+        lifecycleScope.launch(Dispatchers.Main) {
+            val x = withContext(Dispatchers.IO){
+                settingDataStore.data.map{ prefs->
+                    DataStoreEntity(
+                        prefs[stringPreferencesKey(name="user")] ?:"",
+                        prefs[booleanPreferencesKey(name="valor")] ?: false
+                    )
+
+                }
+            }
+            ret = x.first()
+        }
+        return ret!!
+
+    }
+
 
 }
